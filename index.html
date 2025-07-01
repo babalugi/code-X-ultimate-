@@ -1,1 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeX Ultimate Studio - Pro Advanced Edition</title>
+    <style>
+        :root {
+            --bg-color: #ffffff; --text-color: #1e1e1e; --sidebar-bg: #f3f3f3; --activity-bar-bg: #e8e8e8; --editor-bg: #ffffff; --panel-bg: #f3f3f3; --tab-bar-bg: #ececec; --tab-active-bg: #ffffff; --tab-inactive-bg: #ececec; --accent-color: #007acc; --border-color: #dddddd; --hover-bg: #e0e0e0; --statusbar-bg: #007acc; --statusbar-text: #ffffff; --icon-color: #4f4f4f; --pro-color: #e6b400; --success-color: #4caf50; --error-color: #f44336;
+        }
+        .dark-theme {
+            --bg-color: #1e1e1e; --text-color: #d4d4d4; --sidebar-bg: #252526; --activity-bar-bg: #333333; --editor-bg: #1e1e1e; --panel-bg: #252526; --tab-bar-bg: #2d2d2d; --tab-active-bg: #1e1e1e; --tab-inactive-bg: #2d2d2d; --accent-color: #007acc; --border-color: #3f3f3f; --hover-bg: #37373d; --statusbar-bg: #007acc; --statusbar-text: #ffffff; --icon-color: #cccccc; --pro-color: #f0c624;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: var(--bg-color); color: var(--text-color); }
+        button, input, textarea { font-family: inherit; } ul { list-style: none; }
+        
+        #splash-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #1e1e1e; color: #d4d4d4; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.8s ease-in-out; }
+        #splash-screen.fade-out { opacity: 0; pointer-events: none; }
+        #splash-screen h1 { font-size: 4rem; font-weight: 300; display: flex; align-items: center; }
+        #splash-screen h1 .logo-icon { font-size: 5rem; margin-right: 15px; }
+        #splash-screen p { font-size: 1.2rem; margin-top: 10px; color: var(--accent-color); }
 
+        .workbench { display: flex; flex-grow: 1; overflow: hidden; }
+        .activity-bar { width: 50px; background-color: var(--activity-bar-bg); border-right: 1px solid var(--border-color); flex-shrink: 0; padding-top: 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .activity-bar .icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--icon-color); border-radius: 4px; font-size: 24px; }
+        .activity-bar .icon:hover, .activity-bar .icon.active { background-color: var(--hover-bg); color: var(--accent-color); }
+        
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); flex-shrink: 0; display: flex; flex-direction: column; }
+        .sidebar-view { display: none; height: 100%; flex-direction: column; } .sidebar-view.active { display: flex; }
+        .sidebar-header { padding: 10px; font-size: 12px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .sidebar-actions button { background: none; border: none; cursor: pointer; color: var(--icon-color); font-size: 18px; margin-left: 5px; }
+        
+        #file-explorer { padding: 5px; overflow-y: auto; flex-grow: 1; }
+        .file-item, .folder-item { list-style: none; }
+        .file-item > div, .folder-header { padding: 6px 10px; cursor: pointer; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; display: flex; align-items: center; }
+        .file-item > div:hover, .folder-header:hover { background-color: var(--hover-bg); }
+        .file-item.active > div { background-color: var(--accent-color); color: white; }
+        .folder-children { padding-left: 15px; display: none; }
+        .folder-item[open] > .folder-children { display: block; }
+        .folder-toggle { margin-right: 5px; transition: transform 0.1s; user-select: none; width: 10px; text-align: center; }
+        .folder-item[open] > .folder-header .folder-toggle { transform: rotate(90deg); }
+        .file-item > div::before, .folder-header::before { margin-right: 8px; font-family: monospace; }
+        .file-item > div::before { content: '📄'; }
+        .folder-header::before { content: '📁'; }
+
+        .view-panel { padding: 10px; display: flex; flex-direction: column; height: 100%; overflow-y: auto; gap: 15px; }
+        .view-section h4 { margin: 0 0 8px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;}
+        .commit-box { display: flex; flex-direction: column; gap: 8px; }
+        .commit-box input, .commit-box button, .commit-box textarea { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--editor-bg); color: inherit; }
+        .commit-box button { background-color: var(--accent-color); color: white; cursor: pointer; }
+        .commit-box button:disabled { background-color: #555; cursor: not-allowed; opacity: 0.6; }
+        
+        #git-status-files .git-file { display: flex; justify-content: space-between; align-items: center; padding: 5px; border-radius: 3px; cursor: pointer; }
+        #git-status-files .git-file.staged { background-color: var(--hover-bg); }
+        .git-file-status { font-weight: bold; padding: 2px 5px; font-size: 10px; border-radius: 3px; background-color: var(--accent-color); color: white; }
+
+        .plugin-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid var(--border-color); }
+        .plugin-info h5 { margin: 0; display: flex; align-items: center; gap: 8px;}
+        .plugin-info .pro-badge { background-color: var(--pro-color); color: var(--bg-color); font-size: 10px; padding: 2px 6px; border-radius: 8px; font-weight: bold; }
+        .plugin-info p { font-size: 12px; opacity: 0.7; }
+        .plugin-item > .toggle-switch { cursor: pointer; }
+        .toggle-switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent-color); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .main-content, .editor-group, #editor-area { flex-grow: 1; display: flex; overflow: hidden; }
+        .main-content, .editor-group { flex-direction: column; } #editor-area { flex-direction: row; }
+        
+        #tab-bar { flex-shrink: 0; display: flex; background-color: var(--tab-bar-bg); overflow-x: auto; }
+        .tab { padding: 8px 12px; border-right: 1px solid var(--border-color); cursor: pointer; font-size: 14px; background-color: var(--tab-inactive-bg); display: flex; align-items: center; gap: 8px; }
+        .tab.active { background-color: var(--tab-active-bg); }
+        .tab .close-tab { font-size: 16px; border-radius: 4px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        .tab .close-tab:hover { background-color: var(--hover-bg); }
+        
+        #editor-container, #preview-container { flex: 1; min-width: 200px; }
+        #editor { width: 100%; height: 100%; }
+        #preview-frame { width: 100%; height: 100%; border: none; background-color: white; }
+        
+        #panel-area { height: 200px; flex-shrink: 0; background-color: var(--panel-bg); border-top: 1px solid var(--border-color); display: flex; flex-direction: column; }
+        .panel-header { padding: 5px 10px; font-size: 13px; font-weight: bold; border-bottom: 1px solid var(--border-color); }
+        #console-output { flex-grow: 1; padding: 10px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 13px; white-space: pre-wrap; }
+        .log-msg.error { color: var(--error-color); } .log-msg.success { color: var(--success-color); }
+        
+        .resizer { background: var(--border-color); z-index: 10; } .resizer.vertical { cursor: col-resize; width: 4px; } .resizer.horizontal { cursor: row-resize; height: 4px; }
+        
+        .status-bar { height: 25px; flex-shrink: 0; background-color: var(--statusbar-bg); color: var(--statusbar-text); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 12px; }
+        .status-bar-left, .status-bar-right { display: flex; align-items: center; gap: 15px; }
+        .status-bar button { background: none; border: none; color: inherit; cursor: pointer; font-size: 12px; }
+        .status-bar button.icon-btn { font-size: 16px; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; display: none; align-items: center; justify-content: center; }
+        .modal { background: var(--sidebar-bg); padding: 20px; border-radius: 8px; width: 500px; max-width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .modal h3 { margin-bottom: 15px; } .modal p { font-size: 14px; margin-bottom: 10px; opacity: 0.9; }
+        .modal .modal-content { max-height: 60vh; overflow-y: auto; white-space: pre-wrap; font-size: 13px; background: var(--editor-bg); padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); }
+        .modal .input-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px;}
+        .modal input { width: 100%; padding: 10px; background: var(--editor-bg); border: 1px solid var(--border-color); color: inherit; border-radius: 4px; }
+        .modal .modal-actions { margin-top: 20px; text-align: right; }
+        .modal button { margin-left: 10px; padding: 8px 15px; border-radius: 4px; border: none; cursor: pointer; }
+        .modal button.primary { background: var(--accent-color); color: white; }
+        
+        .payment-modal-body { text-align: center; }
+        .payment-modal-body .price { font-size: 24px; font-weight: bold; color: var(--accent-color); margin: 10px 0; }
+        .payment-modal-body img.qr-code { width: 180px; height: 180px; margin: 10px auto; display: block; border: 4px solid var(--border-color); border-radius: 8px; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        #ad-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        #ad-popup-content { background: var(--sidebar-bg); padding: 20px; border-radius: 10px; position: relative; max-width: 500px; width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
+        #ad-popup-content .ad-image { width: 100%; height: auto; max-height: 250px; object-fit: contain; border-radius: 5px; margin-bottom: 15px; }
+        #ad-popup-content .ad-title { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
+        #ad-popup-content .ad-description { font-size: 14px; opacity: 0.8; margin-bottom: 20px; }
+        #ad-popup-footer { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 0; }
+        #ad-skip-btn { background: var(--accent-color); color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; }
+        #ad-timer { font-size: 12px; opacity: 0.7; }
+    </style>
+</head>
+<body class="dark-theme">
+
+    <div id="splash-screen"><h1><span class="logo-icon">⚡</span>CodeX Ultimate</h1><p>Pro Advanced Edition</p></div>
+
+    <div class="workbench">
+        <div class="activity-bar">
+            <div class="icon active" title="Explorer" data-view="explorer">📄</div>
+            <div class="icon" title="Source Control" data-view="git">⎇</div>
+            <div class="icon" title="Plugins" data-view="plugins">🔌</div>
+            <div class="icon" title="AI Assistant" data-view="ai">🤖</div>
+            <div class="icon" title="Settings" data-view="settings">⚙️</div>
+        </div>
+
+        <div class="sidebar" id="sidebar">
+            <div id="explorer-view" class="sidebar-view active">
+                <div class="sidebar-header"><span>Explorer</span><div class="sidebar-actions"><button id="new-file-btn" title="New File">📄+</button><button id="new-folder-btn" title="New Folder">📁+</button></div></div>
+                <ul id="file-explorer"></ul>
+            </div>
+            <div id="git-view" class="sidebar-view">
+                <div class="sidebar-header"><span>Source Control</span></div>
+                <div class="view-panel">
+                    <div class="view-section"><h4>Commit</h4><div class="commit-box"><input id="commit-message" type="text" placeholder="Commit message"><button id="commit-btn" disabled>Commit Staged Changes</button></div></div>
+                    <div class="view-section"><h4>Changes (<span id="changes-count">0</span>)</h4><div id="git-status-files">Not a git repository.</div></div>
+                </div>
+            </div>
+            <div id="plugins-view" class="sidebar-view">
+                <div class="sidebar-header"><span>Plugins</span></div><div id="plugin-list" class="view-panel"></div>
+            </div>
+            <div id="ai-view" class="sidebar-view">
+                 <div class="sidebar-header"><span>AI Assistant</span></div>
+                <div class="view-panel"><textarea id="ai-prompt" rows="4" placeholder="e.g., 'Create a blue button with rounded corners for style.css'"></textarea><div class="commit-box"><button id="ai-generate-btn">Generate Code</button></div></div>
+            </div>
+            <div id="settings-view" class="sidebar-view">
+                <div class="sidebar-header"><span>Settings</span></div>
+                <div class="view-panel">
+                    <div class="view-section"><h4>GitHub Configuration</h4><p>Set your GitHub Personal Access Token and Repo URL.</p><button id="config-git-btn">Configure GitHub</button></div>
+                    <div class="view-section"><h4>AI Configuration</h4><p>Set your OpenAI API Key for unlimited usage.</p><button id="config-ai-btn">Configure AI</button></div>
+                    <div class="view-section"><h4>Remote Actions</h4><div class="commit-box"><button id="git-push-btn" disabled>Push to GitHub</button><button id="git-init-btn">Initialize Repository</button></div></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="resizer vertical" id="sidebar-resizer"></div>
+        <div class="main-content">
+            <div class="editor-group"><div id="tab-bar"></div><div id="editor-area"><div id="editor-container"><div id="editor"></div></div><div class="resizer vertical" id="editor-resizer"></div><div id="preview-container"><iframe id="preview-frame"></iframe></div></div></div>
+            <div class="resizer horizontal" id="panel-resizer"></div><div id="panel-area"><div class="panel-header">CONSOLE</div><div id="console-output"></div></div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-bar-left">
+            <strong id="status-branch"></strong>
+            <span id="status-message">Ready</span>
+        </div>
+        <div class="status-bar-right">
+            <button id="about-btn">About</button>
+            <button id="terms-btn">Terms</button>
+            <button id="privacy-btn">Privacy</button>
+            <button id="export-mobile-btn" title="Export for Native Mobile" class="icon-btn">📱→📦</button>
+            <button id="download-zip-btn" title="Download Project" class="icon-btn">💾</button>
+            <button id="theme-toggle-btn" title="Toggle Theme" class="icon-btn">🎨</button>
+        </div>
+    </div>
+
+    <div id="main-modal" class="modal-overlay">
+        <div class="modal">
+            <h3 id="modal-title"></h3>
+            <div id="modal-body"></div>
+            <div class="modal-actions">
+                <button id="modal-close-btn">Close</button>
+                <button id="modal-save-btn" class="primary" style="display:none;">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ad-popup-overlay">
+        <div id="ad-popup-content">
+            <a id="ad-link" href="#" target="_blank">
+                <img id="ad-image" src="" alt="Advertisement" class="ad-image">
+            </a>
+            <h3 id="ad-title" class="ad-title"></h3>
+            <p id="ad-description" class="ad-description"></p>
+            <div id="ad-popup-footer">
+                <span id="ad-timer"></span>
+                <button id="ad-skip-btn">Skip Ad</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor/min/vs/loader.js"></script>
+    <script src="https://unpkg.com/prettier@2.8.1/standalone.js"></script>
+    <script src="https://unpkg.com/prettier@2.8.1/parser-html.js"></script>
+    <script src="https://unpkg.com/prettier@2.8.1/parser-babel.js"></script>
+    <script src="https://unpkg.com/prettier@2.8.1/parser-postcss.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/esbuild-wasm@0.17.11/lib/browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/isomorphic-git@1.24.5/index.umd.min.js"></script>
+    <script src="https://unpkg.com/isomorphic-git/http/web/index.js"></script>
+    
+    <script>
+    // ########## START: CONFIGURATION AREA ##########
+    const ADS_CONFIG = {
+        ads: [
+            { title: "SuperCharge Your Hosting", description: "Get 99% off on the fastest web hosting. Limited time offer!", imageUrl: "https://via.placeholder.com/400x200.png/007acc/ffffff?text=Fast+Hosting+Offer", linkUrl: "#" },
+            { title: "Learn to Code in 30 Days", description: "Join our masterclass and become a pro developer. Enroll now!", imageUrl: "https://via.placeholder.com/400x200.png/4caf50/ffffff?text=Coding+Masterclass", linkUrl: "#" },
+            { title: "Ultimate UI Kit", description: "Build stunning websites faster with our premium UI components.", imageUrl: "https://via.placeholder.com/400x200.png/ff9800/ffffff?text=Premium+UI+Kit", linkUrl: "#" }
+        ],
+        showOnLoadDelay: 5000,
+        autoCloseDuration: 10,
+    };
+
+    const PAYMENT_INFO = {
+        UPI_ID: "your-upi-id@okhdfcbank",
+        UPI_QR_CODE_URL: "https://i.imgur.com/YOUR_IMAGE_ID.png"
+    };
+    
+    const ABOUT_INFO = `CodeX Ultimate Studio v5 (Pro Advanced Edition)\nCreated with passion for developers.`;
+    const TERMS_OF_SERVICE = `By using this tool, you agree to our terms.`;
+    const PRIVACY_POLICY = `We respect your privacy. All data is stored locally in your browser.`;
+    // ########## END: CONFIGURATION AREA ##########
+
+    class AdManager {
+        constructor(config) {
+            this.config = config; this.adIndex = Math.floor(Math.random() * this.config.ads.length); this.timerInterval = null; this.isAdVisible = false;
+            this.dom = {
+                overlay: document.getElementById('ad-popup-overlay'), image: document.getElementById('ad-image'), title: document.getElementById('ad-title'), description: document.getElementById('ad-description'), link: document.getElementById('ad-link'), timer: document.getElementById('ad-timer'), skipBtn: document.getElementById('ad-skip-btn'),
+            };
+            this.init();
+        }
+        init() {
+            if (!this.config.ads.length) return;
+            setTimeout(() => this.showAd(), this.config.showOnLoadDelay);
+            document.addEventListener('mouseleave', (e) => { if (e.clientY <= 0 && !this.isAdVisible) { this.showAd(); } });
+            this.dom.skipBtn.addEventListener('click', () => this.hideAd());
+        }
+        showAd() {
+            if (this.isAdVisible || !this.config.ads.length) return;
+            const ad = this.config.ads[this.adIndex];
+            this.dom.image.src = ad.imageUrl; this.dom.title.textContent = ad.title; this.dom.description.textContent = ad.description; this.dom.link.href = ad.linkUrl;
+            this.dom.overlay.style.display = 'flex'; this.isAdVisible = true;
+            this.adIndex = (this.adIndex + 1) % this.config.ads.length;
+            this.startTimer();
+        }
+        hideAd() {
+            if (!this.isAdVisible) return;
+            this.dom.overlay.style.display = 'none'; this.isAdVisible = false;
+            clearInterval(this.timerInterval);
+        }
+        startTimer() {
+            let timeLeft = this.config.autoCloseDuration; this.dom.timer.textContent = `Ad will close in ${timeLeft}s`; clearInterval(this.timerInterval);
+            this.timerInterval = setInterval(() => {
+                timeLeft--; this.dom.timer.textContent = `Ad will close in ${timeLeft}s`;
+                if (timeLeft <= 0) { this.hideAd(); }
+            }, 1000);
+        }
+    }
+
+    class CodeXApp {
+        constructor(editorInstance) {
+            this.editor = editorInstance;
+            this.projectFiles = {}; this.openFiles = []; this.activeFile = null; this.config = {}; this.plugins = {}; this.purchasedPlugins = new Set(); this.isGitInitialized = false; this.stagedFiles = new Set();
+            this.defaultFiles = {
+                'index.html': `<!DOCTYPE html><html lang="en"><head><title>CodeX App</title><link rel="stylesheet" href="style.css"></head><body><h1>Welcome to CodeX!</h1><p>Edit this file or create new ones.</p><script src="app.js"><\/script></body></html>`,
+                'style.css': `body { font-family: system-ui, sans-serif; padding: 20px; background-color: #f0f0f0; color: #333;}`,
+                'app.js': `console.log('App started successfully!');`
+            };
+            this.cacheDOM(); this.init();
+        }
+        async init() {
+            this.log('System', 'Initializing CodeX Ultimate (Pro Advanced Edition)...');
+            this.loadConfig(); this.loadState(); this.loadPurchases(); this.initPlugins(); this.bindEvents(); this.switchView('explorer'); this.renderAll();
+            try { await esbuild.initialize({ wasmURL: 'https://cdn.jsdelivr.net/npm/esbuild-wasm@0.17.11/esbuild.wasm' }); this.log('System', 'Build system ready.'); } catch (e) { this.log('Error', 'Build system failed to load.', 'error'); }
+            try { await git.resolveRef({ fs: this.fs, dir: '.', ref: 'HEAD' }); this.isGitInitialized = true; this.log('Git', 'Existing repository detected.'); } catch (e) { this.isGitInitialized = false; }
+            this.updateGitStatus(); this.log('System', 'CodeX is ready.');
+        }
+        cacheDOM() { this.dom = { sidebar: document.getElementById('sidebar'), fileExplorer: document.getElementById('file-explorer'), tabBar: document.getElementById('tab-bar'), consoleOutput: document.getElementById('console-output'), statusMessage: document.getElementById('status-message'), activityBar: document.querySelector('.activity-bar'), sidebarViews: document.querySelectorAll('.sidebar-view'), pluginList: document.getElementById('plugin-list'), commitMessage: document.getElementById('commit-message'), commitBtn: document.getElementById('commit-btn'), pushBtn: document.getElementById('git-push-btn'), initBtn: document.getElementById('git-init-btn'), gitStatusFiles: document.getElementById('git-status-files'), changesCount: document.getElementById('changes-count'), modal: document.getElementById('main-modal'), modalTitle: document.getElementById('modal-title'), modalBody: document.getElementById('modal-body'), modalSaveBtn: document.getElementById('modal-save-btn'), modalCloseBtn: document.getElementById('modal-close-btn'), editorContainer: document.getElementById('editor-container'), panelArea: document.getElementById('panel-area'), statusBranch: document.getElementById('status-branch') }; }
+        loadConfig() { this.config = JSON.parse(localStorage.getItem('codex_config_adv_v1') || '{}'); this.applyTheme(this.config.theme || 'dark'); }
+        saveConfig() { localStorage.setItem('codex_config_adv_v1', JSON.stringify(this.config)); }
+        loadState() { const s = JSON.parse(localStorage.getItem('codex_state_adv_v1') || '{}'); this.projectFiles = Object.keys(s.projectFiles || {}).length ? s.projectFiles : { ...this.defaultFiles }; this.openFiles = s.openFiles || ['index.html']; this.activeFile = s.activeFile || 'index.html'; }
+        saveState() { const s = { projectFiles: this.projectFiles, openFiles: this.openFiles, activeFile: this.activeFile }; localStorage.setItem('codex_state_adv_v1', JSON.stringify(s)); this.dom.statusMessage.textContent = `Saved ${new Date().toLocaleTimeString()}`; }
+        loadPurchases() { this.purchasedPlugins = new Set(JSON.parse(localStorage.getItem('codex_purchases_adv_v1') || '[]')); }
+        savePurchases() { localStorage.setItem('codex_purchases_adv_v1', JSON.stringify(Array.from(this.purchasedPlugins))); }
+        initPlugins() {
+            this.plugins = {
+                // Free Plugins
+                emmet: { name: "Emmet", description: "HTML/CSS abbreviations.", enabled: true, tier: 'free' },
+                prettier: { name: "Prettier Formatter", description: "Format your code automatically.", enabled: true, tier: 'free'},
+                liveServer: { name: "Live Server", description: "Launch a local development server.", enabled: true, tier: 'free' },
+                linting: { name: "Code Linting", description: "Find and fix problems in your code.", enabled: true, tier: 'free' },
+                aiAutocomplete: { name: "AI Autocomplete", description: "Get AI-powered code suggestions.", enabled: true, tier: 'free' },
+                
+                // Advanced PRO Plugins
+                cloudSync: { name: "Cloud Sync PRO", description: "Sync projects with Google Drive/Dropbox.", enabled: false, tier: 'pro', price: 499 },
+                apiTester: { name: "API Tester PRO", description: "Test API endpoints directly in the IDE.", enabled: false, tier: 'pro', price: 349 },
+                webVitals: { name: "Web Vitals Analyzer PRO", description: "Analyze your site's performance.", enabled: false, tier: 'pro', price: 299 }
+            };
+            const pluginState = this.config.plugins || {};
+            Object.keys(this.plugins).forEach(id => {
+                const plugin = this.plugins[id];
+                if (plugin.tier === 'free' || this.purchasedPlugins.has(id)) { plugin.enabled = pluginState[id] ?? plugin.enabled; } 
+                else { plugin.enabled = false; }
+            });
+        }
+        renderAll() { this.renderFileExplorer(); this.renderTabs(); this.renderPlugins(); if (this.activeFile) this.switchToFile(this.activeFile); }
+        renderFileExplorer() { this.dom.fileExplorer.innerHTML = ''; const fileTree = {}; const allPaths = new Set(Object.keys(this.projectFiles)); Object.keys(this.projectFiles).forEach(path => { let current = ''; path.split('/').slice(0, -1).forEach(part => { current += (current ? '/' : '') + part; allPaths.add(current + '/'); }); }); Array.from(allPaths).sort().forEach(path => { let currentLevel = fileTree; path.split('/').forEach((part, index, arr) => { if (!part) return; const isFile = index === arr.length - 1 && !path.endsWith('/'); const currentPath = arr.slice(0, index + 1).join('/'); if (!currentLevel[part]) { currentLevel[part] = { _is_file: isFile, _path: isFile ? currentPath : currentPath.slice(0, -1), children: {} }; } currentLevel = currentLevel[part].children; }); }); const createTree = (node, container) => { Object.entries(node).forEach(([name, item]) => { if (item._is_file && name === '.gitkeep') return; if (item._is_file) { const li = document.createElement('li'); li.className = 'file-item'; if (item._path === this.activeFile) li.classList.add('active'); li.dataset.path = item._path; const div = document.createElement('div'); div.textContent = name; li.appendChild(div); container.appendChild(li); } else { const li = document.createElement('li'); li.className = 'folder-item'; li.dataset.path = item._path; const header = document.createElement('div'); header.className = 'folder-header'; header.innerHTML = `<span class="folder-toggle">›</span>${name}`; li.appendChild(header); const childrenContainer = document.createElement('ul'); childrenContainer.className = 'folder-children'; li.appendChild(childrenContainer); header.addEventListener('click', e => { e.stopPropagation(); li.toggleAttribute('open'); }); container.appendChild(li);  if (Object.keys(item.children).length > 0) createTree(item.children, childrenContainer); } }); }; createTree(fileTree, this.dom.fileExplorer); }
+        renderTabs() { this.dom.tabBar.innerHTML = ''; this.openFiles.forEach(path => { const tab = document.createElement('div'); tab.className = 'tab'; if (path === this.activeFile) tab.classList.add('active'); tab.dataset.path = path; tab.innerHTML = `<span>${path.substring(path.lastIndexOf('/') + 1)}</span><span class="close-tab">&times;</span>`; this.dom.tabBar.appendChild(tab); }); }
+        renderPlugins() { this.dom.pluginList.innerHTML = ''; Object.entries(this.plugins).forEach(([id, p]) => { const isPro = p.tier === 'pro'; const isPurchased = this.purchasedPlugins.has(id); const proBadge = isPro ? '<span class="pro-badge">PRO</span>' : ''; const item = document.createElement('div'); item.className = 'plugin-item'; item.innerHTML = `<div class="plugin-info"><h5>${p.name} ${proBadge}</h5><p>${p.description}</p></div><label class="toggle-switch" data-plugin-id="${id}"><input type="checkbox" ${p.enabled ? 'checked' : ''} ${isPro && !isPurchased ? 'disabled' : ''}><span class="slider"></span></label>`; this.dom.pluginList.appendChild(item); }); }
+        updatePreview() { const html = this.projectFiles['index.html'] || ''; const css = Object.entries(this.projectFiles).filter(([k]) => k.endsWith('.css')).map(([,v])=>`<style>${v}</style>`).join(''); const js = Object.entries(this.projectFiles).filter(([k]) => k.endsWith('.js')).map(([,v])=>`<script>${v}<\/script>`).join(''); document.getElementById('preview-frame').srcdoc = `<html><head>${css}</head><body>${html}${js}</body></html>`; }
+        switchToFile(path) { if (this.projectFiles[path] === undefined) { this.closeFile(path); return; } this.activeFile = path; const model = this.editor.getModel(); if (model) { if(model.getValue() !== this.projectFiles[path]) model.setValue(this.projectFiles[path]); const langMap = { html: 'html', css: 'css', js: 'javascript', json: 'json', md: 'markdown' }; monaco.editor.setModelLanguage(model, langMap[path.split('.').pop()] || 'plaintext'); } this.renderFileExplorer(); this.renderTabs(); this.updatePreview(); }
+        closeFile(path) { this.openFiles = this.openFiles.filter(p => p !== path); if (this.activeFile === path) { this.activeFile = this.openFiles[0] || null; if(this.activeFile) this.switchToFile(this.activeFile); else { this.editor.setValue(''); this.renderFileExplorer(); } } this.renderTabs(); }
+        bindEvents() { this.editor.getModel().onDidChangeContent(() => { if(this.activeFile) this.projectFiles[this.activeFile] = this.editor.getValue(); this.saveState(); if(this.isGitInitialized) this.updateGitStatus(); setTimeout(() => this.updatePreview(), 500); }); this.dom.activityBar.addEventListener('click', e => this.handleActivityBarClick(e)); this.dom.fileExplorer.addEventListener('click', e => this.handleFileExplorerClick(e)); this.dom.tabBar.addEventListener('click', e => this.handleTabClick(e)); document.getElementById('new-file-btn').onclick = () => this.addNewFile(); document.getElementById('new-folder-btn').onclick = () => this.addNewFolder(); document.getElementById('theme-toggle-btn').onclick = () => this.toggleTheme(); document.getElementById('download-zip-btn').onclick = () => this.downloadZip(); document.getElementById('export-mobile-btn').onclick = () => this.exportForMobile(); document.getElementById('ai-generate-btn').onclick = () => this.handleAIGenerate(); document.getElementById('config-ai-btn').onclick = () => this.showConfigModal('ai'); document.getElementById('config-git-btn').onclick = () => this.showConfigModal('git'); document.getElementById('about-btn').onclick = () => this.showInfoModal('About CodeX Ultimate Studio', ABOUT_INFO); document.getElementById('terms-btn').onclick = () => this.showInfoModal('Terms of Service', TERMS_OF_SERVICE); document.getElementById('privacy-btn').onclick = () => this.showInfoModal('Privacy Policy', PRIVACY_POLICY); this.dom.initBtn.onclick = () => this.gitInit(); this.dom.commitBtn.onclick = () => this.gitCommit(); this.dom.pushBtn.onclick = () => this.gitPush(); this.dom.pluginList.addEventListener('click', e => this.handlePluginClick(e)); this.dom.modalSaveBtn.onclick = () => this.handleModalSave(); this.dom.modalCloseBtn.onclick = () => this.dom.modal.style.display = 'none'; this.setupResizer('sidebar-resizer', this.dom.sidebar, 'x'); this.setupResizer('editor-resizer', this.dom.editorContainer, 'x'); this.setupResizer('panel-resizer', this.dom.panelArea, 'y'); }
+        handlePluginClick(e) { const label = e.target.closest('.toggle-switch'); if (!label) return; const pluginId = label.dataset.pluginId; const plugin = this.plugins[pluginId]; const checkbox = label.querySelector('input'); if (plugin.tier === 'pro' && !this.purchasedPlugins.has(pluginId)) { e.preventDefault(); this.showPaymentModal(pluginId); } else { plugin.enabled = checkbox.checked; if(!this.config.plugins) this.config.plugins={}; this.config.plugins[pluginId] = plugin.enabled; this.saveConfig(); this.log('Plugin', `${plugin.name} ${plugin.enabled ? 'enabled' : 'disabled'}.`); } }
+        showPaymentModal(pluginId) { const plugin = this.plugins[pluginId]; this.dom.modalTitle.textContent = `Purchase ${plugin.name}`; const bodyHtml = `<div class="payment-modal-body"><p>To unlock this PRO feature, please complete the payment.</p><div class="price">Price: ₹${plugin.price}</div><p>1. Scan the QR code below or pay to UPI ID: <strong>${PAYMENT_INFO.UPI_ID}</strong></p><img src="${PAYMENT_INFO.UPI_QR_CODE_URL}" class="qr-code" alt="Scan to pay with UPI"><p>2. After payment, enter the <strong>UPI Transaction ID</strong> below to verify and unlock.</p><div class="input-group"><input type="text" id="upi-txn-id" placeholder="Enter 12-digit UPI Transaction ID"></div><button id="verify-payment-btn" class="primary" style="margin-top: 15px;">Verify & Unlock</button></div>`; this.dom.modalBody.innerHTML = bodyHtml; this.dom.modalSaveBtn.style.display = 'none'; this.dom.modal.dataset.type = 'payment'; this.dom.modal.style.display = 'flex'; document.getElementById('verify-payment-btn').onclick = () => this.verifyPayment(pluginId); }
+        verifyPayment(pluginId) { const txnIdInput = document.getElementById('upi-txn-id'); const txnId = txnIdInput.value; if (!txnId || txnId.trim().length < 12) { alert('Please enter a valid 12-digit UPI Transaction ID.'); txnIdInput.focus(); return; } this.dom.modalBody.innerHTML = `<div class="payment-modal-body"><h4>Unlocking Plugin...</h4><div class="loader"></div></div>`; setTimeout(() => { this.dom.modalBody.innerHTML = `<div class="payment-modal-body"><h4 style="color: var(--success-color);">Plugin Unlocked!</h4><p>Thank you for your purchase. You can now use this feature.</p></div>`; this.log('System', `${this.plugins[pluginId].name} unlocked with Txn ID: ${txnId}`, 'success'); this.purchasedPlugins.add(pluginId); this.savePurchases(); setTimeout(() => { this.dom.modal.style.display = 'none'; this.initPlugins(); this.renderPlugins(); }, 2000); }, 1500); }
+        handleActivityBarClick(e) { const icon = e.target.closest('.icon'); if (icon) this.switchView(icon.dataset.view); }
+        switchView(view) { this.dom.activityBar.querySelector('.active')?.classList.remove('active'); this.dom.activityBar.querySelector(`[data-view="${view}"]`).classList.add('active'); this.dom.sidebarViews.forEach(v => v.classList.remove('active')); document.getElementById(`${view}-view`).classList.add('active'); if (view === 'git') this.updateGitStatus(); }
+        handleFileExplorerClick(e) { const fileItem = e.target.closest('.file-item'); if (fileItem) { const path = fileItem.dataset.path; if (!this.openFiles.includes(path)) this.openFiles.push(path); this.switchToFile(path); } }
+        handleTabClick(e) { const tab = e.target.closest('.tab'); if (e.target.classList.contains('close-tab')) this.closeFile(tab.dataset.path); else if (tab) this.switchToFile(tab.dataset.path); }
+        showConfigModal(type) { this.dom.modalTitle.textContent = type === 'ai' ? 'Configure AI' : 'Configure GitHub'; let bodyHtml = ''; if (type === 'ai') { bodyHtml = `<p>Enter OpenAI API Key.</p><div class="input-group"><input type="password" id="modal-ai-key" placeholder="sk-..." value="${this.config.ai?.apiKey || ''}"></div>`; } else if (type === 'git') { bodyHtml = `<p>Enter repo URL and a Personal Access Token with "repo" scope.</p><div class="input-group"><input type="text" id="modal-git-url" placeholder="https://github.com/user/repo.git" value="${this.config.git?.repoUrl || ''}"><input type="password" id="modal-git-token" placeholder="github_pat_..." value="${this.config.git?.token || ''}"></div>`; } this.dom.modalBody.innerHTML = bodyHtml; this.dom.modalSaveBtn.style.display = 'inline-block'; this.dom.modal.dataset.type = type; this.dom.modal.style.display = 'flex'; }
+        showInfoModal(title, content) { this.dom.modalTitle.textContent = title; this.dom.modalBody.innerHTML = `<div class="modal-content">${content.replace(/\n/g, '<br>')}</div>`; this.dom.modalSaveBtn.style.display = 'none'; this.dom.modal.dataset.type = 'info'; this.dom.modal.style.display = 'flex'; }
+        handleModalSave() { const type = this.dom.modal.dataset.type; if (type === 'ai') { if(!this.config.ai) this.config.ai = {}; this.config.ai.apiKey = document.getElementById('modal-ai-key').value; } else if (type === 'git') { if(!this.config.git) this.config.git = {}; this.config.git.repoUrl = document.getElementById('modal-git-url').value; this.config.git.token = document.getElementById('modal-git-token').value; } this.saveConfig(); this.log('System', `${type.toUpperCase()} configuration saved.`); this.dom.modal.style.display = 'none'; }
+        log(source, message, type = '') { const e = document.createElement('div'); e.className = `log-msg ${type}`; e.innerHTML = `<strong>[${source}]</strong> ${message}`; this.dom.consoleOutput.prepend(e); }
+        addNewFile() { const p = prompt("Enter new file path (e.g., 'src/component.js'):"); if (p && !this.projectFiles[p]) { this.projectFiles[p] = ''; this.openFiles.push(p); this.renderAll(); this.switchToFile(p); } }
+        addNewFolder() { const p = prompt("Enter new folder path (e.g., 'src/components'):"); if (p) { this.projectFiles[`${p}/.gitkeep`] = ''; this.renderAll(); } }
+        downloadZip() { const z = new JSZip(); Object.entries(this.projectFiles).forEach(([p,c])=>z.file(p,c)); z.generateAsync({type:"blob"}).then(b => { const l=document.createElement("a");l.href=URL.createObjectURL(b);l.download="CodeX.zip";l.click(); }); }
+        exportForMobile() { const z = new JSZip(); Object.entries(this.projectFiles).forEach(([p,c])=>z.file(`www/${p}`,c)); z.file('capacitor.config.json',`{"appId":"com.codex.app","appName":"CodeXApp","webDir":"www"}`); z.file('package.json',`{"name":"codex-app","dependencies":{"@capacitor/core":"latest","@capacitor/android":"latest"},"devDependencies":{"@capacitor/cli":"latest"}}`); z.file('BUILD.md',`# Build Instructions\n1. Unzip\n2. In terminal: npm install\n3. npx cap add android\n4. npx cap sync\n5. npx cap open android`); z.generateAsync({type:"blob"}).then(b=>{const l=document.createElement("a");l.href=URL.createObjectURL(b);l.download="CodeX-Mobile.zip";l.click()}); }
+        async handleAIGenerate() { const k=this.config.ai?.apiKey; if(!k){this.log('AI','API Key not set.','error');this.showConfigModal('ai');return;} const p=document.getElementById('ai-prompt').value; if(!p){this.log('AI','Prompt empty.','error');return;} this.log('AI','Generating...'); try{const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${k}`},body:JSON.stringify({model:"gpt-3.5-turbo",messages:[{role:"system",content:"You are a code assistant. Provide only raw code."}, {role:"user",content:p}]})}); if(!r.ok)throw new Error(r.statusText); const d=await r.json(),c=d.choices[0].message.content; if(this.activeFile)this.editor.executeEdits(null,[{range:this.editor.getSelection(),text:c}]); this.log('AI','Code generated.');}catch(e){this.log('AI Error',e.message,'error');}}
+        get fs() { const self = this; return { promises: { readFile: async p => { const content = self.projectFiles[p.replace(/^\.\//, '')]; if(content===undefined)throw new Error(`ENOENT: no such file or directory, open '${p}'`); return new TextEncoder().encode(content)}, writeFile: async(p,d)=>{self.projectFiles[p.replace(/^\.\//, '')]= new TextDecoder().decode(d); this.renderFileExplorer(); this.saveState()}, unlink: async p=>{delete self.projectFiles[p.replace(/^\.\//, '')]; this.renderFileExplorer(); this.saveState();}, readdir: async p=>{const s=new Set();const dir=p.replace(/^\.\//,'');Object.keys(self.projectFiles).forEach(fp=>{if(fp.startsWith(dir==='.'?'':dir+'/')){const sp=fp.substring(dir==='.'?0:dir.length+1);s.add(sp.split('/')[0])}});return Array.from(s)}, stat: async p=>{ const path = p.replace(/^\.\//, ''); const isFile = self.projectFiles[path] !== undefined; const isDirectory = !isFile && Object.keys(self.projectFiles).some(fp => fp.startsWith(path + '/')); if (!isFile && !isDirectory) throw new Error(`ENOENT: no such file or directory, stat '${p}'`); return { type: isFile ? 'file' : 'dir', mode: isFile ? 0o100644 : 0o040755, isFile: () => isFile, isDirectory: () => isDirectory, mtimeMs:Date.now(), size:self.projectFiles[path]?.length||0 } }, lstat: async p=>this.fs.promises.stat(p), mkdir:async()=>{} } }; }
+        async gitInit() { try{await git.init({fs:this.fs,dir:'.'});this.isGitInitialized=true;this.log('Git','Repository initialized.');this.updateGitStatus();}catch(e){if(e.code==='AlreadyInitializedError')this.isGitInitialized=true;else this.log('Git Error',e.message,'error');} this.updateGitStatus(); }
+        async updateGitStatus() { if(!this.isGitInitialized) { this.dom.gitStatusFiles.textContent='Not a git repository.'; this.dom.pushBtn.disabled=true; return; } try{ const matrix = await git.statusMatrix({fs:this.fs,dir:'.'}); this.dom.gitStatusFiles.innerHTML=''; const changes=matrix.filter(r=>r[2]!==r[3]); this.dom.changesCount.textContent=changes.length; if(changes.length===0){this.dom.gitStatusFiles.textContent='No changes.';this.dom.commitBtn.disabled=true;return;} changes.forEach(([fp,h,w,s])=>{ let st='M'; if(s===2)st='A'; if(w===0)st='D'; const item=document.createElement('div'); item.className='git-file'; item.dataset.filepath = fp; if (this.stagedFiles.has(fp)) item.classList.add('staged'); item.innerHTML=`<span>${fp}</span><span class="git-file-status">${st}</span>`; item.onclick=()=>{if(this.stagedFiles.has(fp)){this.stagedFiles.delete(fp); item.classList.remove('staged');} else {this.stagedFiles.add(fp); item.classList.add('staged');} this.dom.commitBtn.disabled=this.stagedFiles.size===0;}; this.dom.gitStatusFiles.appendChild(item); }); this.dom.commitBtn.disabled=this.stagedFiles.size===0; this.dom.pushBtn.disabled=false;} catch(e){this.isGitInitialized=false; this.log('Git Error', e.message, 'error');} const branch = await git.currentBranch({fs:this.fs,dir:'.'}).catch(()=>null); this.dom.statusBranch.textContent=branch?`⎇ ${branch}`:'';}
+        async gitCommit() { const msg=this.dom.commitMessage.value; if(!msg){alert('Commit message required.');return;} try{ for(const fp of this.stagedFiles)await git.add({fs:this.fs,dir:'.',filepath:fp}); await git.commit({fs:this.fs,dir:'.',message:msg,author:{name:'CodeX User', email: 'user@codex.dev'}}); this.log('Git',`Committed: "${msg}"`); this.dom.commitMessage.value=''; this.stagedFiles.clear(); this.updateGitStatus();}catch(e){this.log('Git Error',e.message,'error');} }
+        async gitPush() { const {repoUrl,token}=this.config.git||{}; if(!repoUrl||!token){this.showConfigModal('git');return;} this.log('Git',`Pushing...`); try{const r=await git.push({fs:this.fs,http,dir:'.',url:repoUrl,onAuth:()=>({username:token})}); if(r.ok) { this.log('Git','Push successful.'); } else { throw new Error((r.errors || ['Push failed']).join('\n')); } }catch(e){this.log('Git Push Error',e.message,'error');}}
+        applyTheme(theme) { document.body.classList.toggle('dark-theme',theme==='dark'); this.config.theme=theme; this.saveConfig(); if(this.editor)monaco.editor.setTheme(theme==='dark'?'vs-dark':'vs'); }
+        toggleTheme() { this.applyTheme(this.config.theme==='dark'?'light':'dark'); }
+        setupResizer(id,el,dir) { const r=document.getElementById(id); r.onmousedown=(e)=>{e.preventDefault();const startSize = dir==='x' ? el.offsetWidth : el.offsetHeight; const startPos = dir==='x' ? e.clientX : e.clientY; const move=(e)=>{const currentPos = dir==='x' ? e.clientX : e.clientY; const delta = currentPos - startPos; if(dir==='x') el.style.width=startSize + delta +'px'; else el.style.height=startSize - delta+'px';};document.addEventListener('mousemove',move);document.addEventListener('mouseup',()=>document.removeEventListener('mousemove',move),{once:true});}}
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const splash = document.getElementById('splash-screen');
+        setTimeout(() => {
+            splash.classList.add('fade-out');
+            splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+        }, 2000);
+
+        require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor/min/vs' } });
+        window.MonacoEnvironment = { getWorkerUrl: () => `data:text/javascript;charset=utf-8,${encodeURIComponent(`self.MonacoEnvironment = { baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor/min/' };\nimportScripts('https://cdn.jsdelivr.net/npm/monaco-editor/min/vs/base/worker/workerMain.js');`)}`};
+        
+        require(['vs/editor/editor.main'], () => {
+            const editorInstance = monaco.editor.create(document.getElementById('editor'), { theme: 'vs-dark', automaticLayout: true, fontSize: 14, wordWrap: 'on' });
+            new CodeXApp(editorInstance);
+            new AdManager(ADS_CONFIG);
+        });
+    });
+    </script>
+</body>
+</html>
